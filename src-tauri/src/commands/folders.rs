@@ -305,7 +305,7 @@ pub async fn set_folder_parent_branch(
     db: tauri::State<'_, AppDatabase>,
     path: String,
     parent_branch: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), AppCommandError> {
     // Find folder by path first
     use crate::db::entities::folder;
     use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
@@ -314,12 +314,15 @@ pub async fn set_folder_parent_branch(
         .filter(folder::Column::DeletedAt.is_null())
         .one(&db.conn)
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            AppCommandError::new(AppErrorCode::DatabaseError, "Failed to query folder")
+                .with_detail(e.to_string())
+        })?;
 
     if let Some(folder_model) = row {
         folder_service::set_folder_parent_branch(&db.conn, folder_model.id, parent_branch)
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(AppCommandError::from)?;
     }
     Ok(())
 }
@@ -606,11 +609,10 @@ pub async fn git_worktree_add(
         .await
         .map_err(AppCommandError::io)?;
     if check.status.success() {
-        return Err(AppCommandError::new(
-            AppErrorCode::AlreadyExists,
-            "Branch already exists",
-        )
-        .with_detail(branch_name));
+        return Err(
+            AppCommandError::new(AppErrorCode::AlreadyExists, "Branch already exists")
+                .with_detail(branch_name),
+        );
     }
 
     // 校验目录是否已存在
@@ -810,10 +812,10 @@ pub async fn git_diff_with_branch(
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        return Err(
-            AppCommandError::external_command("git diff failed", stderr)
-                .with_detail(format!("branch={target_branch}")),
-        );
+        return Err(AppCommandError::external_command(
+            "git diff failed",
+            format!("branch={target_branch}; {stderr}"),
+        ));
     }
 
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -1104,7 +1106,10 @@ pub async fn git_list_all_branches(path: String) -> Result<GitBranchList, AppCom
 }
 
 #[tauri::command]
-pub async fn git_merge(path: String, branch_name: String) -> Result<GitMergeResult, AppCommandError> {
+pub async fn git_merge(
+    path: String,
+    branch_name: String,
+) -> Result<GitMergeResult, AppCommandError> {
     // Count commits to be merged before performing merge
     let count_output = crate::process::tokio_command("git")
         .args(["rev-list", "--count", &format!("HEAD..{}", branch_name)])
@@ -1289,9 +1294,11 @@ fn should_refresh_git_status_for_paths(root_display: &str, changed_paths: &[Stri
         .any(|path| !ignored.contains(path.as_str()))
 }
 
-fn canonicalize_watch_root(root: &Path) -> Result<(PathBuf, String), String> {
-    let canonical = std::fs::canonicalize(root)
-        .map_err(|e| format!("Unable to resolve workspace root: {e}"))?;
+fn canonicalize_watch_root(root: &Path) -> Result<(PathBuf, String), AppCommandError> {
+    let canonical = std::fs::canonicalize(root).map_err(|e| {
+        AppCommandError::new(AppErrorCode::NotFound, "Unable to resolve workspace root")
+            .with_detail(e.to_string())
+    })?;
     let key = normalize_slash_path(&canonical);
     Ok((canonical, key))
 }
@@ -1560,18 +1567,27 @@ fn validate_new_name(new_name: &str) -> Result<&str, String> {
 }
 
 #[tauri::command]
-pub async fn start_file_tree_watch(app: tauri::AppHandle, root_path: String) -> Result<(), String> {
+pub async fn start_file_tree_watch(
+    app: tauri::AppHandle,
+    root_path: String,
+) -> Result<(), AppCommandError> {
     let root = PathBuf::from(&root_path);
     if !root.exists() || !root.is_dir() {
-        return Err("Folder does not exist".to_string());
+        return Err(AppCommandError::new(
+            AppErrorCode::NotFound,
+            "Folder does not exist",
+        ));
     }
 
     let (root_canonical, key) = canonicalize_watch_root(&root)?;
 
     {
-        let mut watchers = FILE_WATCHERS
-            .lock()
-            .map_err(|_| "Failed to lock file watcher registry".to_string())?;
+        let mut watchers = FILE_WATCHERS.lock().map_err(|_| {
+            AppCommandError::new(
+                AppErrorCode::Unknown,
+                "Failed to lock file watcher registry",
+            )
+        })?;
         if let Some(entry) = watchers.get_mut(&key) {
             entry.ref_count += 1;
             return Ok(());
@@ -1606,19 +1622,30 @@ pub async fn start_file_tree_watch(app: tauri::AppHandle, root_path: String) -> 
                 }
             },
         )
-        .map_err(|e| format!("Failed to create file watcher: {e}"))?,
+        .map_err(|e| {
+            AppCommandError::new(AppErrorCode::IoError, "Failed to create file watcher")
+                .with_detail(e.to_string())
+        })?,
     );
 
     watcher
         .as_mut()
-        .ok_or_else(|| "Failed to create file watcher".to_string())?
+        .ok_or_else(|| {
+            AppCommandError::new(AppErrorCode::Unknown, "Failed to create file watcher")
+        })?
         .watch(&root_canonical, RecursiveMode::Recursive)
-        .map_err(|e| format!("Failed to start file watcher: {e}"))?;
+        .map_err(|e| {
+            AppCommandError::new(AppErrorCode::IoError, "Failed to start file watcher")
+                .with_detail(e.to_string())
+        })?;
 
     let should_cleanup_new_watcher = {
-        let mut watchers = FILE_WATCHERS
-            .lock()
-            .map_err(|_| "Failed to lock file watcher registry".to_string())?;
+        let mut watchers = FILE_WATCHERS.lock().map_err(|_| {
+            AppCommandError::new(
+                AppErrorCode::Unknown,
+                "Failed to lock file watcher registry",
+            )
+        })?;
         if let Some(entry) = watchers.get_mut(&key) {
             entry.ref_count += 1;
             true
@@ -1628,9 +1655,12 @@ pub async fn start_file_tree_watch(app: tauri::AppHandle, root_path: String) -> 
                 FileWatchEntry {
                     root_canonical,
                     root_display: root_path,
-                    watcher: watcher
-                        .take()
-                        .ok_or_else(|| "Failed to initialize file watcher state".to_string())?,
+                    watcher: watcher.take().ok_or_else(|| {
+                        AppCommandError::new(
+                            AppErrorCode::Unknown,
+                            "Failed to initialize file watcher state",
+                        )
+                    })?,
                     worker: worker.take(),
                     ref_count: 1,
                 },
@@ -1652,15 +1682,18 @@ pub async fn start_file_tree_watch(app: tauri::AppHandle, root_path: String) -> 
 }
 
 #[tauri::command]
-pub async fn stop_file_tree_watch(root_path: String) -> Result<(), String> {
+pub async fn stop_file_tree_watch(root_path: String) -> Result<(), AppCommandError> {
     let root = PathBuf::from(&root_path);
     let key = canonicalize_watch_root(&root)
         .map(|(_, key)| key)
         .unwrap_or_else(|_| normalize_slash_path(&root));
 
-    let mut watchers = FILE_WATCHERS
-        .lock()
-        .map_err(|_| "Failed to lock file watcher registry".to_string())?;
+    let mut watchers = FILE_WATCHERS.lock().map_err(|_| {
+        AppCommandError::new(
+            AppErrorCode::Unknown,
+            "Failed to lock file watcher registry",
+        )
+    })?;
 
     let target_key = if watchers.contains_key(&key) {
         Some(key)

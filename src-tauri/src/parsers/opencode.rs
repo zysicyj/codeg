@@ -634,13 +634,7 @@ mod tests {
 
     #[test]
     fn xdg_data_home_falls_back_to_home_local_share() {
-        let resolved = resolve_xdg_data_home(
-            None,
-            Some(PathBuf::from("/Users/default")),
-        );
-        assert_eq!(
-            resolved,
-            Some(PathBuf::from("/Users/default/.local/share"))
-        );
+        let resolved = resolve_xdg_data_home(None, Some(PathBuf::from("/Users/default")));
+        assert_eq!(resolved, Some(PathBuf::from("/Users/default/.local/share")));
     }
 }

@@ -162,10 +162,7 @@ impl CodexParser {
 }
 
 fn resolve_codex_home_dir() -> PathBuf {
-    resolve_codex_home_dir_from(
-        std::env::var_os("CODEX_HOME"),
-        dirs::home_dir(),
-    )
+    resolve_codex_home_dir_from(std::env::var_os("CODEX_HOME"), dirs::home_dir())
 }
 
 fn resolve_codex_home_dir_from(
@@ -1257,10 +1254,7 @@ mod tests {
 
     #[test]
     fn codex_home_defaults_to_home_dot_codex() {
-        let resolved = resolve_codex_home_dir_from(
-            None,
-            Some(PathBuf::from("/Users/default")),
-        );
+        let resolved = resolve_codex_home_dir_from(None, Some(PathBuf::from("/Users/default")));
         assert_eq!(resolved, PathBuf::from("/Users/default/.codex"));
     }
 }

@@ -466,10 +466,7 @@ impl GeminiParser {
 }
 
 fn resolve_gemini_base_dir() -> PathBuf {
-    resolve_gemini_base_dir_from(
-        std::env::var_os("GEMINI_CLI_HOME"),
-        dirs::home_dir(),
-    )
+    resolve_gemini_base_dir_from(std::env::var_os("GEMINI_CLI_HOME"), dirs::home_dir())
 }
 
 fn resolve_gemini_base_dir_from(
@@ -610,8 +607,8 @@ fn group_into_turns(messages: Vec<UnifiedMessage>) -> Vec<MessageTurn> {
 
 #[cfg(test)]
 mod tests {
-    use super::GeminiParser;
     use super::resolve_gemini_base_dir_from;
+    use super::GeminiParser;
     use crate::parsers::AgentParser;
     use std::env;
     use std::fs;
@@ -706,10 +703,7 @@ mod tests {
 
     #[test]
     fn gemini_defaults_to_home_dot_gemini() {
-        let resolved = resolve_gemini_base_dir_from(
-            None,
-            Some(PathBuf::from("/Users/default")),
-        );
+        let resolved = resolve_gemini_base_dir_from(None, Some(PathBuf::from("/Users/default")));
         assert_eq!(resolved, PathBuf::from("/Users/default/.gemini"));
     }
 }

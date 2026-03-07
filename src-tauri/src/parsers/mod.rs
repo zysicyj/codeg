@@ -251,8 +251,8 @@ mod tests {
     use chrono::Utc;
 
     use super::{
-        infer_context_window_max_tokens, latest_turn_total_usage_tokens, merge_context_window_stats,
-        path_eq_for_matching,
+        infer_context_window_max_tokens, latest_turn_total_usage_tokens,
+        merge_context_window_stats, path_eq_for_matching,
     };
     use crate::models::{MessageTurn, SessionStats, TurnRole, TurnUsage};
 

@@ -136,13 +136,11 @@ pub async fn get_conversation(
             AgentType::OpenCode => Box::new(OpenCodeParser::new()),
             AgentType::Gemini => Box::new(GeminiParser::new()),
             _ => {
-                return Err(
-                    AppCommandError::new(
-                        AppErrorCode::InvalidInput,
-                        "Conversation parsing is not supported for this agent",
-                    )
-                    .with_detail(format!("agent_type={agent_type}")),
+                return Err(AppCommandError::new(
+                    AppErrorCode::InvalidInput,
+                    "Conversation parsing is not supported for this agent",
                 )
+                .with_detail(format!("agent_type={agent_type}")))
             }
         };
 
@@ -178,8 +176,11 @@ pub async fn get_stats() -> Result<AgentStats, AppCommandError> {
     })
     .await
     .map_err(|e| {
-        AppCommandError::new(AppErrorCode::Unknown, "Failed to compute conversation stats")
-            .with_detail(e.to_string())
+        AppCommandError::new(
+            AppErrorCode::Unknown,
+            "Failed to compute conversation stats",
+        )
+        .with_detail(e.to_string())
     })?
 }
 
@@ -347,13 +348,11 @@ pub async fn update_conversation_status(
     conversation_id: i32,
     status: String,
 ) -> Result<(), AppCommandError> {
-    let status_enum: conversation::ConversationStatus = serde_json::from_value(
-        serde_json::Value::String(status),
-    )
-    .map_err(|e| {
-        AppCommandError::new(AppErrorCode::InvalidInput, "Invalid conversation status")
-            .with_detail(e.to_string())
-    })?;
+    let status_enum: conversation::ConversationStatus =
+        serde_json::from_value(serde_json::Value::String(status)).map_err(|e| {
+            AppCommandError::new(AppErrorCode::InvalidInput, "Invalid conversation status")
+                .with_detail(e.to_string())
+        })?;
     conversation_service::update_status(&db.conn, conversation_id, status_enum)
         .await
         .map_err(AppCommandError::from)
@@ -419,8 +418,7 @@ fn compute_stats(all_conversations: &[ConversationSummary]) -> AgentStats {
 fn parse_error_to_app_error(error: ParseError) -> AppCommandError {
     match error {
         ParseError::ConversationNotFound(id) => {
-            AppCommandError::new(AppErrorCode::NotFound, "Conversation not found")
-                .with_detail(id)
+            AppCommandError::new(AppErrorCode::NotFound, "Conversation not found").with_detail(id)
         }
         ParseError::InvalidData(message) => {
             AppCommandError::new(AppErrorCode::InvalidInput, "Invalid conversation data")
@@ -428,10 +426,11 @@ fn parse_error_to_app_error(error: ParseError) -> AppCommandError {
         }
         ParseError::Io(err) => AppCommandError::new(AppErrorCode::IoError, "I/O operation failed")
             .with_detail(err.to_string()),
-        ParseError::Json(err) => {
-            AppCommandError::new(AppErrorCode::InvalidInput, "Failed to parse conversation file")
-                .with_detail(err.to_string())
-        }
+        ParseError::Json(err) => AppCommandError::new(
+            AppErrorCode::InvalidInput,
+            "Failed to parse conversation file",
+        )
+        .with_detail(err.to_string()),
         ParseError::Db(err) => {
             AppCommandError::new(AppErrorCode::DatabaseError, "Database operation failed")
                 .with_detail(err.to_string())

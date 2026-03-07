@@ -191,13 +191,11 @@ pub async fn focus_folder_window(app: AppHandle, folder_id: i32) -> Result<(), A
             }
         }
     }
-    Err(
-        AppCommandError::new(
-            AppErrorCode::NotFound,
-            format!("No open window for folder {folder_id}"),
-        )
-        .with_detail(format!("folder_id={folder_id}")),
+    Err(AppCommandError::new(
+        AppErrorCode::NotFound,
+        format!("No open window for folder {folder_id}"),
     )
+    .with_detail(format!("folder_id={folder_id}")))
 }
 
 #[tauri::command]
@@ -251,9 +249,9 @@ pub async fn open_commit_window(
         }
         state.set_owner(label.clone(), owner_label);
         let _ = existing.unminimize();
-        existing.set_focus().map_err(|e| {
-            AppCommandError::window("Failed to focus commit window", e.to_string())
-        })?;
+        existing
+            .set_focus()
+            .map_err(|e| AppCommandError::window("Failed to focus commit window", e.to_string()))?;
         return Ok(());
     }
 

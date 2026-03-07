@@ -286,10 +286,7 @@ impl ClaudeParser {
 }
 
 fn resolve_claude_config_dir() -> PathBuf {
-    resolve_claude_config_dir_from(
-        std::env::var_os("CLAUDE_CONFIG_DIR"),
-        dirs::home_dir(),
-    )
+    resolve_claude_config_dir_from(std::env::var_os("CLAUDE_CONFIG_DIR"), dirs::home_dir())
 }
 
 fn resolve_claude_config_dir_from(
@@ -974,10 +971,7 @@ mod tests {
 
     #[test]
     fn claude_config_dir_defaults_to_home_dot_claude() {
-        let resolved = resolve_claude_config_dir_from(
-            None,
-            Some(PathBuf::from("/Users/default")),
-        );
+        let resolved = resolve_claude_config_dir_from(None, Some(PathBuf::from("/Users/default")));
         assert_eq!(resolved, PathBuf::from("/Users/default/.claude"));
     }
 }
