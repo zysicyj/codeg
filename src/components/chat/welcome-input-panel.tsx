@@ -301,6 +301,8 @@ export function WelcomeInputPanel({
     disconnect: connDisconnect,
     sessionId: connSessionId,
   } = conn
+  const isConnecting =
+    connStatus === "connecting" || connStatus === "downloading"
   const connectionModes = useMemo(
     () => conn.modes?.available_modes ?? [],
     [conn.modes?.available_modes]
@@ -326,11 +328,38 @@ export function WelcomeInputPanel({
   const externalIdSavedRef = useRef(false)
   const sessionIdRef = useRef<string | null>(null)
   const refreshingCurrentAgentRef = useRef(false)
+  const agentStatusRefreshTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null)
+  const phaseRef = useRef(phase)
+  const workingDirRef = useRef(workingDir)
+  const connStatusRef = useRef(connStatus)
+  const isConnectingRef = useRef(false)
+  const connConnectRef = useRef(connConnect)
+  const connDisconnectRef = useRef(connDisconnect)
   useEffect(() => {
     if (connSessionId) {
       sessionIdRef.current = connSessionId
     }
   }, [connSessionId])
+  useEffect(() => {
+    phaseRef.current = phase
+  }, [phase])
+  useEffect(() => {
+    workingDirRef.current = workingDir
+  }, [workingDir])
+  useEffect(() => {
+    connStatusRef.current = connStatus
+  }, [connStatus])
+  useEffect(() => {
+    isConnectingRef.current = isConnecting
+  }, [isConnecting])
+  useEffect(() => {
+    connConnectRef.current = connConnect
+  }, [connConnect])
+  useEffect(() => {
+    connDisconnectRef.current = connDisconnect
+  }, [connDisconnect])
 
   const trySaveExternalId = useCallback(() => {
     if (
@@ -353,29 +382,33 @@ export function WelcomeInputPanel({
     if (connSessionId) trySaveExternalId()
   }, [connSessionId, trySaveExternalId])
 
-  const isConnecting =
-    connStatus === "connecting" || connStatus === "downloading"
-
   useEffect(() => {
     let cancelled = false
     let unlisten: (() => void) | null = null
 
     const syncCurrentAgentStatus = async () => {
       if (cancelled) return
-      if (phase !== "welcome") return
-      if (!workingDir) return
+      if (phaseRef.current !== "welcome") return
+      const currentWorkingDir = workingDirRef.current
+      if (!currentWorkingDir) return
       if (refreshingCurrentAgentRef.current) return
-      if (connStatus === "prompting" || isConnecting) return
+      const currentConnStatus = connStatusRef.current
+      if (currentConnStatus === "prompting" || isConnectingRef.current) return
 
       refreshingCurrentAgentRef.current = true
       try {
         setAgentConnectError(null)
-        if (connStatus === "connected") {
-          await connDisconnect()
+        if (currentConnStatus === "connected") {
+          await connDisconnectRef.current()
         }
-        await connConnect(selectedAgentRef.current, workingDir, undefined, {
-          source: "auto_link",
-        })
+        await connConnectRef.current(
+          selectedAgentRef.current,
+          currentWorkingDir,
+          undefined,
+          {
+            source: "auto_link",
+          }
+        )
         if (!cancelled) {
           setAgentConnectError(null)
         }
@@ -403,7 +436,12 @@ export function WelcomeInputPanel({
           ) {
             return
           }
-          void syncCurrentAgentStatus()
+          if (agentStatusRefreshTimerRef.current) {
+            clearTimeout(agentStatusRefreshTimerRef.current)
+          }
+          agentStatusRefreshTimerRef.current = setTimeout(() => {
+            void syncCurrentAgentStatus()
+          }, 120)
         })
       )
       .then((dispose) => {
@@ -419,11 +457,15 @@ export function WelcomeInputPanel({
 
     return () => {
       cancelled = true
+      if (agentStatusRefreshTimerRef.current) {
+        clearTimeout(agentStatusRefreshTimerRef.current)
+        agentStatusRefreshTimerRef.current = null
+      }
       if (unlisten) {
         unlisten()
       }
     }
-  }, [connConnect, connDisconnect, connStatus, isConnecting, phase, workingDir])
+  }, [])
 
   const prevStatusRef = useRef(connStatus)
 

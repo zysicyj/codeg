@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
 import { acpListAgents } from "@/lib/tauri"
 import type { AgentType, AcpAgentInfo } from "@/lib/types"
@@ -30,6 +30,16 @@ export function AgentSelector({
   const [selected, setSelected] = useState<AgentType | null>(
     defaultAgentType ?? null
   )
+  const onSelectRef = useRef(onSelect)
+  const onAgentsLoadedRef = useRef(onAgentsLoaded)
+
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
+
+  useEffect(() => {
+    onAgentsLoadedRef.current = onAgentsLoaded
+  }, [onAgentsLoaded])
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +56,7 @@ export function AgentSelector({
         )
         const visible = sorted.filter((a) => a.enabled)
         setAgents(visible)
-        onAgentsLoaded?.(visible)
+        onAgentsLoadedRef.current?.(visible)
         if (defaultAgentType) {
           const found = visible.find(
             (a) => a.agent_type === defaultAgentType && a.available
@@ -57,20 +67,20 @@ export function AgentSelector({
             const first = visible.find((a) => a.available)
             if (first) {
               setSelected(first.agent_type)
-              onSelect(first.agent_type)
+              onSelectRef.current(first.agent_type)
             }
           }
         } else {
           const first = visible.find((a) => a.available)
           if (first) {
             setSelected(first.agent_type)
-            onSelect(first.agent_type)
+            onSelectRef.current(first.agent_type)
           }
         }
       } catch {
         if (!cancelled && requestId === latestRequestId) {
           setAgents([])
-          onAgentsLoaded?.([])
+          onAgentsLoadedRef.current?.([])
         }
       }
     }
@@ -106,7 +116,7 @@ export function AgentSelector({
         unlisten()
       }
     }
-  }, [defaultAgentType, onAgentsLoaded, onSelect])
+  }, [defaultAgentType])
 
   const handleSelect = (agentType: AgentType) => {
     setSelected(agentType)
