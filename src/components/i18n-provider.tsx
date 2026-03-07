@@ -34,6 +34,7 @@ interface AppI18nContextValue {
 }
 
 const AppI18nContext = createContext<AppI18nContextValue | null>(null)
+const LANGUAGE_SETTINGS_UPDATED_EVENT = "app://language-settings-updated"
 
 function subscribeSystemLocale(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {}
@@ -127,6 +128,57 @@ export function AppI18nProvider({
     },
     []
   )
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== LANGUAGE_SETTINGS_STORAGE_KEY || !event.newValue) return
+
+      try {
+        const next = normalizeLanguageSettings(
+          JSON.parse(event.newValue) as SystemLanguageSettings
+        )
+        setLanguageSettingsState(next)
+      } catch {
+        // Ignore malformed storage payloads.
+      }
+    }
+
+    window.addEventListener("storage", onStorage)
+
+    let unlisten: (() => void) | null = null
+    let cancelled = false
+
+    void import("@tauri-apps/api/event")
+      .then(({ listen }) =>
+        listen<SystemLanguageSettings>(
+          LANGUAGE_SETTINGS_UPDATED_EVENT,
+          (event) => {
+            if (cancelled) return
+            setLanguageSettings(event.payload)
+          }
+        )
+      )
+      .then((dispose) => {
+        if (cancelled) {
+          dispose()
+          return
+        }
+        unlisten = dispose
+      })
+      .catch(() => {
+        // Ignore when running in non-tauri environment.
+      })
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("storage", onStorage)
+      if (unlisten) {
+        unlisten()
+      }
+    }
+  }, [setLanguageSettings])
 
   useEffect(() => {
     let cancelled = false

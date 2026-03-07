@@ -49,11 +49,18 @@ import {
 import { Message, MessageContent } from "@/components/ai-elements/message"
 import { ContentPartsRenderer } from "@/components/message/content-parts-renderer"
 
+const ACP_AGENTS_UPDATED_EVENT = "app://acp-agents-updated"
+
 interface WelcomeInputPanelProps {
   defaultAgentType?: AgentType
   workingDir?: string
   tabId?: string
   isActive?: boolean
+}
+
+interface AgentsUpdatedEventPayload {
+  reason?: string
+  agent_type?: AgentType | null
 }
 
 function normalizeErrorMessage(error: unknown): string {
@@ -318,6 +325,7 @@ export function WelcomeInputPanel({
   // the DB conversation ID and the ACP session ID are available.
   const externalIdSavedRef = useRef(false)
   const sessionIdRef = useRef<string | null>(null)
+  const refreshingCurrentAgentRef = useRef(false)
   useEffect(() => {
     if (connSessionId) {
       sessionIdRef.current = connSessionId
@@ -347,6 +355,75 @@ export function WelcomeInputPanel({
 
   const isConnecting =
     connStatus === "connecting" || connStatus === "downloading"
+
+  useEffect(() => {
+    let cancelled = false
+    let unlisten: (() => void) | null = null
+
+    const syncCurrentAgentStatus = async () => {
+      if (cancelled) return
+      if (phase !== "welcome") return
+      if (!workingDir) return
+      if (refreshingCurrentAgentRef.current) return
+      if (connStatus === "prompting" || isConnecting) return
+
+      refreshingCurrentAgentRef.current = true
+      try {
+        setAgentConnectError(null)
+        if (connStatus === "connected") {
+          await connDisconnect()
+        }
+        await connConnect(selectedAgentRef.current, workingDir, undefined, {
+          source: "auto_link",
+        })
+        if (!cancelled) {
+          setAgentConnectError(null)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAgentConnectError(normalizeErrorMessage(error))
+        }
+        if (!isExpectedAutoLinkError(error)) {
+          console.error("[WelcomePanel] refresh current agent status:", error)
+        }
+      } finally {
+        refreshingCurrentAgentRef.current = false
+      }
+    }
+
+    void import("@tauri-apps/api/event")
+      .then(({ listen }) =>
+        listen<AgentsUpdatedEventPayload>(ACP_AGENTS_UPDATED_EVENT, (event) => {
+          if (cancelled) return
+          if (event.payload?.reason === "agent_reordered") return
+          const changedAgentType = event.payload?.agent_type
+          if (
+            changedAgentType &&
+            changedAgentType !== selectedAgentRef.current
+          ) {
+            return
+          }
+          void syncCurrentAgentStatus()
+        })
+      )
+      .then((dispose) => {
+        if (cancelled) {
+          dispose()
+          return
+        }
+        unlisten = dispose
+      })
+      .catch(() => {
+        // Ignore when non-tauri runtime.
+      })
+
+    return () => {
+      cancelled = true
+      if (unlisten) {
+        unlisten()
+      }
+    }
+  }, [connConnect, connDisconnect, connStatus, isConnecting, phase, workingDir])
 
   const prevStatusRef = useRef(connStatus)
 

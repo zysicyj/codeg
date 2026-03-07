@@ -1,5 +1,5 @@
 use sea_orm::DatabaseConnection;
-use tauri::State;
+use tauri::{Emitter, State};
 
 use crate::app_error::AppCommandError;
 use crate::db::service::app_metadata_service;
@@ -9,6 +9,7 @@ use crate::network::proxy;
 
 const SYSTEM_PROXY_SETTINGS_KEY: &str = "system_proxy_settings";
 const SYSTEM_LANGUAGE_SETTINGS_KEY: &str = "system_language_settings";
+const LANGUAGE_SETTINGS_UPDATED_EVENT: &str = "app://language-settings-updated";
 
 fn normalize_proxy_settings(
     settings: SystemProxySettings,
@@ -118,6 +119,7 @@ pub async fn get_system_language_settings(
 pub async fn update_system_language_settings(
     settings: SystemLanguageSettings,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<SystemLanguageSettings, AppCommandError> {
     let serialized = serde_json::to_string(&settings).map_err(|e| {
         AppCommandError::invalid_input("Failed to serialize language settings")
@@ -127,6 +129,8 @@ pub async fn update_system_language_settings(
     app_metadata_service::upsert_value(&db.conn, SYSTEM_LANGUAGE_SETTINGS_KEY, &serialized)
         .await
         .map_err(AppCommandError::from)?;
+
+    let _ = app.emit(LANGUAGE_SETTINGS_UPDATED_EVENT, &settings);
 
     Ok(settings)
 }

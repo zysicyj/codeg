@@ -8,6 +8,8 @@ import { AGENT_LABELS } from "@/lib/types"
 import { AgentIcon } from "@/components/agent-icon"
 import { cn } from "@/lib/utils"
 
+const ACP_AGENTS_UPDATED_EVENT = "app://acp-agents-updated"
+
 interface AgentSelectorProps {
   defaultAgentType?: AgentType
   onSelect: (agentType: AgentType) => void
@@ -31,16 +33,20 @@ export function AgentSelector({
 
   useEffect(() => {
     let cancelled = false
-    acpListAgents()
-      .then((list) => {
-        if (cancelled) return
+    let latestRequestId = 0
+
+    const reloadAgents = async () => {
+      const requestId = latestRequestId + 1
+      latestRequestId = requestId
+      try {
+        const list = await acpListAgents()
+        if (cancelled || requestId !== latestRequestId) return
         const sorted = [...list].sort(
           (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name)
         )
         const visible = sorted.filter((a) => a.enabled)
         setAgents(visible)
         onAgentsLoaded?.(visible)
-        // Auto-select default if it exists in the list
         if (defaultAgentType) {
           const found = visible.find(
             (a) => a.agent_type === defaultAgentType && a.available
@@ -48,7 +54,6 @@ export function AgentSelector({
           if (found) {
             setSelected(found.agent_type)
           } else {
-            // Fall back to first available
             const first = visible.find((a) => a.available)
             if (first) {
               setSelected(first.agent_type)
@@ -62,15 +67,44 @@ export function AgentSelector({
             onSelect(first.agent_type)
           }
         }
-      })
-      .catch(() => {
-        if (!cancelled) {
+      } catch {
+        if (!cancelled && requestId === latestRequestId) {
           setAgents([])
           onAgentsLoaded?.([])
         }
+      }
+    }
+
+    void reloadAgents()
+    const onWindowFocus = () => {
+      void reloadAgents()
+    }
+    window.addEventListener("focus", onWindowFocus)
+
+    let unlisten: (() => void) | null = null
+    void import("@tauri-apps/api/event")
+      .then(({ listen }) =>
+        listen(ACP_AGENTS_UPDATED_EVENT, () => {
+          void reloadAgents()
+        })
+      )
+      .then((dispose) => {
+        if (cancelled) {
+          dispose()
+          return
+        }
+        unlisten = dispose
       })
+      .catch(() => {
+        // Ignore when non-tauri runtime.
+      })
+
     return () => {
       cancelled = true
+      window.removeEventListener("focus", onWindowFocus)
+      if (unlisten) {
+        unlisten()
+      }
     }
   }, [defaultAgentType, onAgentsLoaded, onSelect])
 

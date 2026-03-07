@@ -2,8 +2,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
-use tauri::State;
+use serde::{Deserialize, Serialize};
+use tauri::{Emitter, State};
 
 use crate::acp::binary_cache;
 use crate::acp::error::AcpError;
@@ -17,6 +17,26 @@ use crate::acp::types::{
 use crate::db::service::agent_setting_service;
 use crate::db::AppDatabase;
 use crate::models::agent::AgentType;
+
+const ACP_AGENTS_UPDATED_EVENT: &str = "app://acp-agents-updated";
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+struct AcpAgentsUpdatedEventPayload {
+    reason: &'static str,
+    agent_type: Option<AgentType>,
+}
+
+fn emit_acp_agents_updated(
+    app: &tauri::AppHandle,
+    reason: &'static str,
+    agent_type: Option<AgentType>,
+) {
+    let _ = app.emit(
+        ACP_AGENTS_UPDATED_EVENT,
+        AcpAgentsUpdatedEventPayload { reason, agent_type },
+    );
+}
 
 fn parse_version_output(output: &std::process::Output) -> Option<String> {
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -1531,6 +1551,7 @@ pub async fn acp_update_agent_preferences(
     codex_auth_json: Option<String>,
     codex_config_toml: Option<String>,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<(), AcpError> {
     let default = agent_setting_service::AgentDefaultInput {
         agent_type,
@@ -1585,6 +1606,7 @@ pub async fn acp_update_agent_preferences(
                 codex_config_toml.as_deref(),
             )?;
         }
+        emit_acp_agents_updated(&app, "preferences_updated", Some(agent_type));
         return Ok(());
     }
 
@@ -1595,6 +1617,7 @@ pub async fn acp_update_agent_preferences(
         if let Some(raw) = config_json.as_deref() {
             persist_agent_local_config_json(agent_type, Some(raw))?;
         }
+        emit_acp_agents_updated(&app, "preferences_updated", Some(agent_type));
         return Ok(());
     }
 
@@ -1613,11 +1636,15 @@ pub async fn acp_update_agent_preferences(
     let local_patch_json = serde_json::to_string(&local_patch_value)
         .map_err(|e| AcpError::protocol(format!("serialize local patch failed: {e}")))?;
     persist_agent_local_config_json(agent_type, Some(local_patch_json.as_str()))?;
+    emit_acp_agents_updated(&app, "preferences_updated", Some(agent_type));
     Ok(())
 }
 
 #[tauri::command]
-pub async fn acp_download_agent_binary(agent_type: AgentType) -> Result<(), AcpError> {
+pub async fn acp_download_agent_binary(
+    agent_type: AgentType,
+    app: tauri::AppHandle,
+) -> Result<(), AcpError> {
     let meta = registry::get_agent_meta(agent_type);
     match meta.distribution {
         registry::AgentDistribution::Binary {
@@ -1639,6 +1666,7 @@ pub async fn acp_download_agent_binary(agent_type: AgentType) -> Result<(), AcpE
 
             let _ = binary_cache::ensure_binary_for_agent(agent_type, version, fallback.url, cmd)
                 .await?;
+            emit_acp_agents_updated(&app, "binary_downloaded", Some(agent_type));
             Ok(())
         }
         registry::AgentDistribution::Npx { .. } | registry::AgentDistribution::Uvx { .. } => Err(
@@ -1678,6 +1706,7 @@ pub async fn acp_prepare_npx_agent(
     agent_type: AgentType,
     registry_version: Option<String>,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<String, AcpError> {
     let meta = registry::get_agent_meta(agent_type);
     match meta.distribution {
@@ -1720,6 +1749,7 @@ pub async fn acp_prepare_npx_agent(
             )
             .await
             .map_err(|e| AcpError::protocol(e.to_string()))?;
+            emit_acp_agents_updated(&app, "npx_prepared", Some(agent_type));
             Ok(resolved)
         }
         registry::AgentDistribution::Binary { .. } => Err(AcpError::protocol(
@@ -1736,6 +1766,7 @@ pub async fn acp_prepare_uvx_agent(
     agent_type: AgentType,
     registry_version: Option<String>,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<String, AcpError> {
     let meta = registry::get_agent_meta(agent_type);
     match meta.distribution {
@@ -1778,6 +1809,7 @@ pub async fn acp_prepare_uvx_agent(
             )
             .await
             .map_err(|e| AcpError::protocol(e.to_string()))?;
+            emit_acp_agents_updated(&app, "uvx_prepared", Some(agent_type));
             Ok(resolved)
         }
         registry::AgentDistribution::Npx { .. } => Err(AcpError::protocol(
@@ -1793,6 +1825,7 @@ pub async fn acp_prepare_uvx_agent(
 pub async fn acp_uninstall_agent(
     agent_type: AgentType,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<(), AcpError> {
     let meta = registry::get_agent_meta(agent_type);
     match meta.distribution {
@@ -1810,6 +1843,7 @@ pub async fn acp_uninstall_agent(
     agent_setting_service::set_installed_version(&db.conn, agent_type, None)
         .await
         .map_err(|e| AcpError::protocol(e.to_string()))?;
+    emit_acp_agents_updated(&app, "agent_uninstalled", Some(agent_type));
     Ok(())
 }
 
@@ -1817,6 +1851,7 @@ pub async fn acp_uninstall_agent(
 pub async fn acp_reorder_agents(
     agent_types: Vec<AgentType>,
     db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
 ) -> Result<(), AcpError> {
     if agent_types.is_empty() {
         return Ok(());
@@ -1831,6 +1866,7 @@ pub async fn acp_reorder_agents(
                 AcpError::protocol(message)
             }
         })?;
+    emit_acp_agents_updated(&app, "agent_reordered", None);
     Ok(())
 }
 
