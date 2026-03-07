@@ -115,6 +115,7 @@ async fn build_agent(
     app_handle: &tauri::AppHandle,
 ) -> Result<AcpAgent, AcpError> {
     let meta = registry::get_agent_meta(agent_type);
+    debug_assert_eq!(meta.agent_type, agent_type);
 
     match meta.distribution {
         AgentDistribution::Npx {

@@ -421,10 +421,7 @@ fn parse_error_to_app_error(error: ParseError) -> AppCommandError {
             AppCommandError::invalid_input("Failed to parse conversation file")
                 .with_detail(err.to_string())
         }
-        ParseError::Db(err) => AppCommandError::new(
-            crate::app_error::AppErrorCode::DatabaseError,
-            "Database operation failed",
-        )
-        .with_detail(err.to_string()),
+        ParseError::Db(err) => AppCommandError::database_error("Database operation failed")
+            .with_detail(err.to_string()),
     }
 }

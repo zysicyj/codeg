@@ -21,7 +21,6 @@ pub enum ParseError {
     Db(#[from] sea_orm::DbErr),
     #[error("Conversation not found: {0}")]
     ConversationNotFound(String),
-    #[allow(dead_code)]
     #[error("Invalid data: {0}")]
     InvalidData(String),
 }

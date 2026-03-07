@@ -15,7 +15,6 @@ use error::DbError;
 use migration::Migrator;
 
 pub struct AppDatabase {
-    #[allow(dead_code)]
     pub conn: DatabaseConnection,
 }
 

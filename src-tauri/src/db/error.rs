@@ -6,9 +6,6 @@ pub enum DbError {
     Database(#[from] sea_orm::DbErr),
     #[error("migration error: {0}")]
     Migration(String),
-    #[allow(dead_code)]
-    #[error("database not initialized")]
-    NotInitialized,
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

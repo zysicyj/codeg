@@ -14,8 +14,7 @@ use super::types::{TerminalEvent, TerminalInfo};
 struct TerminalInstance {
     write_tx: mpsc::Sender<Vec<u8>>,
     master: Box<dyn MasterPty + Send>,
-    #[allow(dead_code)]
-    child: Box<dyn portable_pty::Child + Send>,
+    _child: Box<dyn portable_pty::Child + Send>,
     title: String,
     owner_window_label: String,
 }
@@ -185,7 +184,7 @@ impl TerminalManager {
         let instance = TerminalInstance {
             write_tx,
             master: pair.master,
-            child,
+            _child: child,
             title: "Terminal".to_string(),
             owner_window_label,
         };
@@ -264,7 +263,7 @@ impl TerminalManager {
         // Windows ConPTY may not always surface EOF promptly; reconcile exited
         // child processes here so frontend running-state can recover reliably.
         for (id, instance) in terminals.iter_mut() {
-            match instance.child.try_wait() {
+            match instance._child.try_wait() {
                 Ok(Some(_)) => exited_terminal_ids.push(id.clone()),
                 Ok(None) => {}
                 Err(err) => {
@@ -332,8 +331,8 @@ impl TerminalManager {
 }
 
 fn terminate_terminal(instance: &mut TerminalInstance) {
-    let _ = instance.child.kill();
-    let _ = instance.child.wait();
+    let _ = instance._child.kill();
+    let _ = instance._child.wait();
 }
 
 fn write_loop(mut writer: Box<dyn Write + Send>, rx: mpsc::Receiver<Vec<u8>>) {

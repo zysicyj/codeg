@@ -16,11 +16,8 @@ static UVX_ENV_CACHE: Mutex<Option<Vec<CheckItem>>> = Mutex::new(None);
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
-#[allow(dead_code)]
 pub enum FixActionKind {
     OpenUrl,
-    RedownloadBinary,
-    RetryConnection,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -57,6 +54,7 @@ pub struct PreflightResult {
 
 pub async fn run_preflight(agent_type: AgentType) -> PreflightResult {
     let meta = registry::get_agent_meta(agent_type);
+    debug_assert_eq!(meta.agent_type, agent_type);
     let checks = match &meta.distribution {
         AgentDistribution::Npx { node_required, .. } => check_npx_environment(*node_required).await,
         AgentDistribution::Uvx { .. } => check_uvx_environment().await,

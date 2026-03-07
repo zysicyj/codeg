@@ -2,7 +2,6 @@ use serde::Serialize;
 
 use crate::db::error::DbError;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AppErrorCode {
@@ -98,7 +97,6 @@ impl AppCommandError {
         Self::new(AppErrorCode::TaskExecutionFailed, message)
     }
 
-    #[allow(dead_code)]
     pub fn io(err: std::io::Error) -> Self {
         let code = match err.kind() {
             std::io::ErrorKind::NotFound => AppErrorCode::NotFound,

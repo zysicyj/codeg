@@ -33,7 +33,6 @@ pub struct PlatformBinary {
 
 #[derive(Debug, Clone)]
 pub struct AcpAgentMeta {
-    #[allow(dead_code)]
     pub agent_type: AgentType,
     pub name: &'static str,
     pub description: &'static str,
@@ -127,7 +126,6 @@ pub fn registry_id_for(agent_type: AgentType) -> &'static str {
     }
 }
 
-#[allow(dead_code)]
 pub fn from_registry_id(id: &str) -> Option<AgentType> {
     match id {
         "auggie" => Some(AgentType::Auggie),
@@ -155,6 +153,7 @@ pub fn from_registry_id(id: &str) -> Option<AgentType> {
 }
 
 pub fn get_agent_meta(agent_type: AgentType) -> AcpAgentMeta {
+    debug_assert_eq!(from_registry_id(registry_id_for(agent_type)), Some(agent_type));
     match agent_type {
         AgentType::Auggie => AcpAgentMeta {
             agent_type,

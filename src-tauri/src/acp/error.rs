@@ -10,14 +10,8 @@ pub enum AcpError {
     Protocol(String),
     #[error("agent process exited unexpectedly")]
     ProcessExited,
-    #[allow(dead_code)]
-    #[error("conversation error: {0}")]
-    Conversation(String),
     #[error("binary download failed: {0}")]
     DownloadFailed(String),
-    #[allow(dead_code)]
-    #[error("agent not found: {0}")]
-    AgentNotFound(String),
     #[error("platform not supported: {0}")]
     PlatformNotSupported(String),
 }
