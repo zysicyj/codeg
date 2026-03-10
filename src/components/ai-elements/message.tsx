@@ -28,6 +28,7 @@ import {
   useState,
 } from "react"
 import { Streamdown } from "streamdown"
+import { useStreamdownLinkSafety } from "./link-safety"
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"]
@@ -327,17 +328,24 @@ export type MessageResponseProps = ComponentProps<typeof Streamdown>
 
 const streamdownPlugins = { cjk, code, math, mermaid }
 
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
+function MessageResponseImpl({ className, ...props }: MessageResponseProps) {
+  const linkSafety = useStreamdownLinkSafety()
+
+  return (
     <Streamdown
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className
       )}
+      linkSafety={linkSafety}
       plugins={streamdownPlugins}
       {...props}
     />
-  ),
+  )
+}
+
+export const MessageResponse = memo(
+  MessageResponseImpl,
   (prevProps, nextProps) => prevProps.children === nextProps.children
 )
 

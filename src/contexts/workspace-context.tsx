@@ -76,7 +76,13 @@ interface WorkspaceContextValue {
   closeOtherFileTabs: (tabId: string) => void
   closeAllFileTabs: () => void
   reorderFileTabs: (tabs: FileWorkspaceTab[]) => void
-  openFilePreview: (path: string) => Promise<void>
+  openFilePreview: (path: string, options?: { line?: number }) => Promise<void>
+  pendingFileReveal: {
+    requestId: number
+    path: string
+    line: number
+  } | null
+  consumePendingFileReveal: (requestId: number) => void
   openWorkingTreeDiff: (
     path?: string,
     options?: { mode?: "auto" | "unified" | "overview" }
@@ -186,7 +192,13 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   const [restored, setRestored] = useState(false)
   const [fileTabs, setFileTabs] = useState<FileWorkspaceTab[]>([])
   const [activeFileTabId, setActiveFileTabId] = useState<string | null>(null)
+  const [pendingFileReveal, setPendingFileReveal] = useState<{
+    requestId: number
+    path: string
+    line: number
+  } | null>(null)
   const fileTabsRef = useRef<FileWorkspaceTab[]>([])
+  const fileRevealRequestIdRef = useRef(0)
 
   useEffect(() => {
     fileTabsRef.current = fileTabs
@@ -310,10 +322,30 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     []
   )
 
+  const consumePendingFileReveal = useCallback((requestId: number) => {
+    setPendingFileReveal((prev) =>
+      prev && prev.requestId === requestId ? null : prev
+    )
+  }, [])
+
   const openFilePreview = useCallback(
-    async (rawPath: string) => {
+    async (rawPath: string, options?: { line?: number }) => {
       if (!folderPath) return
       const path = normalizePath(rawPath)
+      const requestedLine =
+        typeof options?.line === "number" && Number.isFinite(options.line)
+          ? Math.max(1, Math.floor(options.line))
+          : null
+      if (requestedLine) {
+        fileRevealRequestIdRef.current += 1
+        setPendingFileReveal({
+          requestId: fileRevealRequestIdRef.current,
+          path,
+          line: requestedLine,
+        })
+      } else {
+        setPendingFileReveal(null)
+      }
       const tabId = `file:${path}`
       upsertLoadingTab(
         loadingTab(
@@ -363,6 +395,11 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
           )
         )
       } catch (error) {
+        if (requestedLine) {
+          setPendingFileReveal((prev) =>
+            prev && prev.path === path ? null : prev
+          )
+        }
         rejectTab(tabId, error instanceof Error ? error.message : String(error))
       }
     },
@@ -960,6 +997,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       closeAllFileTabs,
       reorderFileTabs,
       openFilePreview,
+      pendingFileReveal,
+      consumePendingFileReveal,
       openWorkingTreeDiff,
       openBranchDiff,
       openCommitDiff,
@@ -986,6 +1025,8 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       closeAllFileTabs,
       reorderFileTabs,
       openFilePreview,
+      pendingFileReveal,
+      consumePendingFileReveal,
       openWorkingTreeDiff,
       openBranchDiff,
       openCommitDiff,

@@ -75,6 +75,10 @@ function normalizeDiffPath(rawPath: string): string | null {
   return trimmed.replace(/\\/g, "/")
 }
 
+function normalizeWorkspacePath(path: string): string {
+  return path.replace(/\\/g, "/")
+}
+
 function parsePathFromDiffGitLine(line: string): string | null {
   if (!line.startsWith("diff --git ")) return null
   const match = line.match(/^diff --git\s+(.+?)\s+(.+)$/)
@@ -574,6 +578,8 @@ export function FileWorkspacePanel() {
   const t = useTranslations("Folder.fileWorkspacePanel")
   const {
     activeFileTab,
+    consumePendingFileReveal,
+    pendingFileReveal,
     openBranchDiff,
     openCommitDiff,
     openFilePreview,
@@ -586,6 +592,7 @@ export function FileWorkspacePanel() {
   const cursorListenerRef = useRef<{ dispose: () => void } | null>(null)
   const gitChangeDecorationsRef = useRef<string[]>([])
   const editorTheme = useMonacoThemeSync()
+  const [editorMountVersion, setEditorMountVersion] = useState(0)
   const [cursorLine, setCursorLine] = useState(1)
   const [collapsedFiles, setCollapsedFiles] = useState<Record<string, boolean>>(
     {}
@@ -826,6 +833,7 @@ export function FileWorkspacePanel() {
           setCursorLine(event.position.lineNumber)
         }
       )
+      setEditorMountVersion((prev) => prev + 1)
       setCursorLine(editorInstance.getPosition()?.lineNumber ?? 1)
       applyHiddenAreas()
       applyGitChangeDecorations()
@@ -835,11 +843,17 @@ export function FileWorkspacePanel() {
 
   const jumpToLine = useCallback((lineNumber: number) => {
     const editorInstance = editorRef.current
-    if (!editorInstance) return
+    if (!editorInstance) return false
 
-    editorInstance.revealLineInCenter(lineNumber)
-    editorInstance.setPosition({ lineNumber, column: 1 })
+    const model = editorInstance.getModel()
+    if (!model) return false
+    const maxLine = model.getLineCount()
+    const targetLine = Math.min(Math.max(1, lineNumber), maxLine)
+
+    editorInstance.revealLineInCenter(targetLine)
+    editorInstance.setPosition({ lineNumber: targetLine, column: 1 })
     editorInstance.focus()
+    return true
   }, [])
 
   const jumpToHunk = useCallback(
@@ -896,6 +910,30 @@ export function FileWorkspacePanel() {
   useEffect(() => {
     applyGitChangeDecorations()
   }, [activeFileTab?.id, applyGitChangeDecorations])
+
+  useEffect(() => {
+    if (!pendingFileReveal) return
+    if (!isFileTab || !activeFileTab || activeFileTab.loading) return
+    if (!activeFileTab.path) return
+    if (
+      normalizeWorkspacePath(activeFileTab.path) !==
+      normalizeWorkspacePath(pendingFileReveal.path)
+    ) {
+      return
+    }
+
+    const jumped = jumpToLine(pendingFileReveal.line)
+    if (!jumped) return
+
+    consumePendingFileReveal(pendingFileReveal.requestId)
+  }, [
+    activeFileTab,
+    consumePendingFileReveal,
+    editorMountVersion,
+    isFileTab,
+    jumpToLine,
+    pendingFileReveal,
+  ])
 
   useEffect(() => {
     autoSaveGuardRef.current = {

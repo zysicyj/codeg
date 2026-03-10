@@ -28,6 +28,7 @@ import {
 import { Streamdown } from "streamdown"
 
 import { Shimmer } from "./shimmer"
+import { useStreamdownLinkSafety } from "./link-safety"
 
 interface ReasoningContextValue {
   isStreaming: boolean
@@ -214,20 +215,28 @@ export type ReasoningContentProps = ComponentProps<
 const streamdownPlugins = { cjk, code, math, mermaid }
 
 export const ReasoningContent = memo(
-  ({ className, children, ...props }: ReasoningContentProps) => (
-    <CollapsibleContent
-      className={cn(
-        "mt-4 text-sm",
-        "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
-        className
-      )}
-      {...props}
-    >
-      <Streamdown plugins={streamdownPlugins} {...props}>
-        {children}
-      </Streamdown>
-    </CollapsibleContent>
-  )
+  ({ className, children, ...props }: ReasoningContentProps) => {
+    const linkSafety = useStreamdownLinkSafety()
+
+    return (
+      <CollapsibleContent
+        className={cn(
+          "mt-4 text-sm",
+          "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+          className
+        )}
+        {...props}
+      >
+        <Streamdown
+          linkSafety={linkSafety}
+          plugins={streamdownPlugins}
+          {...props}
+        >
+          {children}
+        </Streamdown>
+      </CollapsibleContent>
+    )
+  }
 )
 
 Reasoning.displayName = "Reasoning"
