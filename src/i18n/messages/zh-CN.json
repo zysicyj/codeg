@@ -1173,6 +1173,7 @@
         "filesSummary": "文件：{count}",
         "moreFiles": "+{count} 个更多文件",
         "plan": "计划",
+        "allowedActions": "允许的操作",
         "targetMode": "目标模式：{mode}"
       },
       "questionDialog": {

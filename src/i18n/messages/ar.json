@@ -1173,6 +1173,7 @@
         "filesSummary": "الملفات: {count}",
         "moreFiles": "+{count} ملف إضافي",
         "plan": "الخطة",
+        "allowedActions": "الإجراءات المسموح بها",
         "targetMode": "وضع الهدف: {mode}"
       },
       "questionDialog": {

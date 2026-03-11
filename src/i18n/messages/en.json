@@ -1173,6 +1173,7 @@
         "filesSummary": "Files: {count}",
         "moreFiles": "+{count} more files",
         "plan": "Plan",
+        "allowedActions": "Allowed actions",
         "targetMode": "Target mode: {mode}"
       },
       "questionDialog": {

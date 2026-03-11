@@ -8,10 +8,12 @@ import {
   FilePenLine,
   ListTodo,
   Compass,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CodeBlock } from "@/components/ai-elements/code-block"
+import { MessageResponse } from "@/components/ai-elements/message"
 import type { PendingPermission } from "@/contexts/acp-connections-context"
 import { parsePermissionToolCall } from "@/lib/permission-request"
 
@@ -39,10 +41,14 @@ export function PermissionDialog({
   const hasFileChanges = parsed.fileChanges.length > 0
   const hasPlan =
     parsed.planEntries.length > 0 || Boolean(parsed.planExplanation)
+  const hasPlanMarkdown = Boolean(parsed.planMarkdown)
+  const hasAllowedPrompts = parsed.allowedPrompts.length > 0
   const hasStructured =
     Boolean(parsed.command) ||
     hasFileChanges ||
     hasPlan ||
+    hasPlanMarkdown ||
+    hasAllowedPrompts ||
     Boolean(parsed.modeTarget)
 
   return (
@@ -135,6 +141,42 @@ export function PermissionDialog({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {hasPlanMarkdown && (
+          <div className="space-y-1.5 rounded-md border border-border/60 bg-muted/20 p-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <FileText className="h-3.5 w-3.5" />
+              <span>{t("plan")}</span>
+            </div>
+            <div className="text-sm prose prose-sm dark:prose-invert max-w-none [&_ul]:list-inside [&_ol]:list-inside">
+              <MessageResponse>{parsed.planMarkdown!}</MessageResponse>
+            </div>
+          </div>
+        )}
+
+        {hasAllowedPrompts && (
+          <div className="space-y-1.5 rounded-md border border-border/60 bg-muted/20 p-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Terminal className="h-3.5 w-3.5" />
+              <span>{t("allowedActions")}</span>
+            </div>
+            <div className="space-y-1 rounded-md bg-muted/40 p-2">
+              {parsed.allowedPrompts.map((item, index) => (
+                <div
+                  key={`${item.prompt}-${index}`}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  {item.tool && (
+                    <Badge variant="outline" className="shrink-0 text-[10px]">
+                      {item.tool}
+                    </Badge>
+                  )}
+                  <span className="text-foreground/90">{item.prompt}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

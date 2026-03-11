@@ -1173,6 +1173,7 @@
         "filesSummary": "Fichiers : {count}",
         "moreFiles": "+{count} fichiers supplémentaires",
         "plan": "Plan de travail",
+        "allowedActions": "Actions autorisées",
         "targetMode": "Mode cible : {mode}"
       },
       "questionDialog": {

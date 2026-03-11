@@ -19,6 +19,11 @@ export interface PermissionPlanEntry {
   status: string | null
 }
 
+export interface PermissionAllowedPrompt {
+  prompt: string
+  tool: string
+}
+
 export interface ParsedPermissionToolCall {
   title: string
   normalizedKind: string
@@ -30,6 +35,8 @@ export interface ParsedPermissionToolCall {
   diffPreview: string | null
   planEntries: PermissionPlanEntry[]
   planExplanation: string | null
+  planMarkdown: string | null
+  allowedPrompts: PermissionAllowedPrompt[]
   modeTarget: string | null
   jsonPreview: string
 }
@@ -529,6 +536,28 @@ function parsePlanEntries(
   return []
 }
 
+function parseAllowedPrompts(
+  rawInputObj: ObjectLike | null
+): PermissionAllowedPrompt[] {
+  if (!rawInputObj) return []
+  const list = asArray(
+    pickValue(rawInputObj, ["allowedPrompts", "allowed_prompts"])
+  )
+  if (!list || list.length === 0) return []
+
+  const prompts: PermissionAllowedPrompt[] = []
+  for (const item of list) {
+    const record = asObject(item)
+    if (!record) continue
+    const prompt = pickString(record, ["prompt", "description", "text"])
+    const tool = pickString(record, ["tool", "toolName", "tool_name"])
+    if (prompt) {
+      prompts.push({ prompt, tool: tool ?? "" })
+    }
+  }
+  return prompts
+}
+
 function formatFallbackTitle(kind: string): string {
   const normalized = kind.replace(/_/g, " ").trim()
   if (!normalized) return "Permission Request"
@@ -631,6 +660,13 @@ export function parsePermissionToolCall(
 
   const planEntries = parsePlanEntries(rawInputObj)
   const planExplanation = pickString(rawInputObj, ["explanation"])
+
+  const rawPlan = rawInputObj ? pickValue(rawInputObj, ["plan"]) : null
+  const planMarkdown =
+    typeof rawPlan === "string" && rawPlan.trim().length > 0 ? rawPlan : null
+
+  const allowedPrompts = parseAllowedPrompts(rawInputObj)
+
   const modeTarget =
     pickString(rawInputObj, [
       "mode_id",
@@ -654,6 +690,8 @@ export function parsePermissionToolCall(
     diffPreview,
     planEntries,
     planExplanation,
+    planMarkdown,
+    allowedPrompts,
     modeTarget,
     jsonPreview: stringifyJson(toolCallObj ?? toolCall),
   }
