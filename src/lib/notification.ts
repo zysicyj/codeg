@@ -1,11 +1,15 @@
-import { getTransport } from "./transport"
-import { isDesktop } from "./transport"
+import { getTransport, isDesktop } from "./transport"
+
+export interface NotificationOptions {
+  sound?: boolean
+}
 
 export async function sendSystemNotification(
   title: string,
-  body: string
+  body: string,
+  options: NotificationOptions = {}
 ): Promise<void> {
-  if (!document.hidden) return
+  // Note: sound option is not yet wired to Tauri backend — future extension
   if (isDesktop()) {
     await getTransport().call("send_notification", { title, body })
   } else {
