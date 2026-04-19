@@ -3,7 +3,7 @@
 import { memo, useState, useCallback, useMemo } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { enUS, zhCN, zhTW } from "date-fns/locale"
-import { GitBranch, Pencil, Trash2, Circle, Download, Plus } from "lucide-react"
+import { GitBranch, Pencil, Trash2, Download, Plus } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import type { DbConversationSummary, ConversationStatus } from "@/lib/types"
 import { STATUS_ORDER, STATUS_COLORS } from "@/lib/types"
@@ -14,9 +14,6 @@ import {
   ContextMenuTrigger,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuSub,
-  ContextMenuSubTrigger,
-  ContextMenuSubContent,
   ContextMenuSeparator,
 } from "@/components/ui/context-menu"
 import {
@@ -112,36 +109,60 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <button
-            data-conversation-id={conversation.id}
-            onClick={handleClick}
-            onDoubleClick={handleDblClick}
-            className={cn(
-              "w-full text-left px-3 py-2.5 mb-1 rounded-md transition-colors",
-              isSelected
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "hover:bg-sidebar-accent/50"
-            )}
-          >
-            <div className="flex items-center gap-1.5 min-w-0">
-              <AgentIcon
-                agentType={conversation.agent_type}
-                className="size-4 shrink-0"
-              />
-              <span className="text-sm font-medium truncate">
-                {conversation.title || t("untitledConversation")}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-              <span>{timeAgo}</span>
-              {conversation.git_branch && (
-                <span className="flex items-center gap-0.5 truncate">
-                  <GitBranch className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{conversation.git_branch}</span>
-                </span>
+          <div className="group">
+            <button
+              data-conversation-id={conversation.id}
+              onClick={handleClick}
+              onDoubleClick={handleDblClick}
+              className={cn(
+                "w-full text-left px-3 py-2.5 mb-1 rounded-md transition-colors flex items-center gap-2",
+                isSelected
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "hover:bg-sidebar-accent/50"
               )}
-            </div>
-          </button>
+            >
+              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                <AgentIcon
+                  agentType={conversation.agent_type}
+                  className="size-4 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">
+                    {conversation.title || t("untitledConversation")}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{timeAgo}</span>
+                    {conversation.git_branch && (
+                      <span className="flex items-center gap-0.5 truncate">
+                        <GitBranch className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {conversation.git_branch}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 shrink-0">
+                {STATUS_ORDER.filter((s) => s !== conversation.status).map(
+                  (s) => (
+                    <button
+                      key={s}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onStatusChange(conversation.id, s)
+                      }}
+                      className={cn(
+                        "w-3.5 h-3.5 rounded-full cursor-pointer hover:scale-110 transition-transform duration-150",
+                        STATUS_COLORS[s]
+                      )}
+                      title={tStatus(s)}
+                    />
+                  )
+                )}
+              </div>
+            </button>
+          </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
           {onNewConversation && (
@@ -157,31 +178,6 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
             <Pencil className="h-4 w-4" />
             {t("rename")}
           </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              <Circle className="h-4 w-4" />
-              {t("status")}
-            </ContextMenuSubTrigger>
-            <ContextMenuSubContent>
-              {STATUS_ORDER.filter((s) => s !== conversation.status).map(
-                (s) => (
-                  <ContextMenuItem
-                    key={s}
-                    onSelect={() => onStatusChange(conversation.id, s)}
-                  >
-                    <span
-                      className={cn(
-                        "w-2 h-2 rounded-full shrink-0",
-                        STATUS_COLORS[s]
-                      )}
-                    />
-                    {tStatus(s)}
-                  </ContextMenuItem>
-                )
-              )}
-            </ContextMenuSubContent>
-          </ContextMenuSub>
           <ContextMenuSeparator />
           <ContextMenuItem
             variant="destructive"
