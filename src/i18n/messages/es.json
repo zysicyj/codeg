@@ -93,10 +93,29 @@
       "version_control": "Control de versiones",
       "system": "Sistema",
       "chat_channels": "Canales de chat",
+      "notifications": "Notificaciones",
       "web_service": "Servicio Web",
       "model_providers": "Proveedores de Modelos",
       "experts": "Expertos"
     }
+  },
+  "NotificationsSettings": {
+    "title": "Notificaciones",
+    "desktopNotification": "Notificación de escritorio",
+    "enableDesktopNotification": "Activar notificaciones de escritorio",
+    "enableDesktopNotificationDesc": "Recibir notificaciones del sistema para eventos de agente",
+    "notificationTypes": "Tipos de notificación",
+    "permissionRequest": "Solicitudes de permiso",
+    "turnComplete": "Respuesta completada",
+    "agentError": "Errores de agente",
+    "sound": "Sonido",
+    "enableSound": "Activar sonido",
+    "clickAction": "Al hacer clic en la notificación",
+    "focusAndNavigate": "Enfocar ventana y navegar a la conversación",
+    "silentOnly": "Mostrar solo la notificación",
+    "timing": "Momento de notificación",
+    "whenBackground": "Solo cuando la aplicación está en segundo plano",
+    "always": "Siempre enviar notificaciones"
   },
   "AppearanceSettings": {
     "sectionTitle": "Apariencia del tema",
