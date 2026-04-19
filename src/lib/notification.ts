@@ -7,9 +7,9 @@ export interface NotificationOptions {
 export async function sendSystemNotification(
   title: string,
   body: string,
-  options: NotificationOptions = {}
+  _options: NotificationOptions = {}
 ): Promise<void> {
-  // Note: sound option is not yet wired to Tauri backend — future extension
+  void _options // reserved for future sound extension
   if (isDesktop()) {
     await getTransport().call("send_notification", { title, body })
   } else {
