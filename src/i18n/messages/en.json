@@ -93,10 +93,29 @@
       "version_control": "Version Control",
       "system": "System",
       "chat_channels": "Chat Channels",
+      "notifications": "Notifications",
       "web_service": "Web Service",
       "model_providers": "Model Providers",
       "experts": "Experts"
     }
+  },
+  "NotificationsSettings": {
+    "title": "Notifications",
+    "desktopNotification": "Desktop Notification",
+    "enableDesktopNotification": "Enable desktop notifications",
+    "enableDesktopNotificationDesc": "Receive system notifications for agent events",
+    "notificationTypes": "Notification Types",
+    "permissionRequest": "Permission Requests",
+    "turnComplete": "Turn Complete",
+    "agentError": "Agent Errors",
+    "sound": "Sound",
+    "enableSound": "Enable sound",
+    "clickAction": "On Notification Click",
+    "focusAndNavigate": "Focus window and navigate to conversation",
+    "silentOnly": "Show notification only",
+    "timing": "Notification Timing",
+    "whenBackground": "Only when app is in background",
+    "always": "Always send notifications"
   },
   "AppearanceSettings": {
     "sectionTitle": "Theme Appearance",
