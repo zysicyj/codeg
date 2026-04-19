@@ -93,10 +93,29 @@
       "version_control": "Versionskontrolle",
       "system": "Systemeinstellungen",
       "chat_channels": "Chat-Kanäle",
+      "notifications": "Benachrichtigungen",
       "web_service": "Webdienst",
       "model_providers": "Modellanbieter",
       "experts": "Experten"
     }
+  },
+  "NotificationsSettings": {
+    "title": "Benachrichtigungen",
+    "desktopNotification": "Desktop-Benachrichtigung",
+    "enableDesktopNotification": "Desktop-Benachrichtigungen aktivieren",
+    "enableDesktopNotificationDesc": "Systembenachrichtigungen für Agent-Ereignisse erhalten",
+    "notificationTypes": "Benachrichtigungstypen",
+    "permissionRequest": "Genehmigungsanfragen",
+    "turnComplete": "Antwort abgeschlossen",
+    "agentError": "Agent-Fehler",
+    "sound": "Ton",
+    "enableSound": "Ton aktivieren",
+    "clickAction": "Nach dem Klicken auf die Benachrichtigung",
+    "focusAndNavigate": "Fenster fokussieren und zum Gespräch navigieren",
+    "silentOnly": "Nur Benachrichtigung anzeigen",
+    "timing": "Benachrichtigungszeitpunkt",
+    "whenBackground": "Nur wenn die App im Hintergrund ist",
+    "always": "Immer Benachrichtigungen senden"
   },
   "AppearanceSettings": {
     "sectionTitle": "Design-Erscheinungsbild",
