@@ -93,10 +93,29 @@
       "version_control": "版本控制",
       "system": "系统",
       "chat_channels": "消息渠道",
+      "notifications": "通知管理",
       "web_service": "Web 服务",
       "model_providers": "模型供应商",
       "experts": "专家"
     }
+  },
+  "NotificationsSettings": {
+    "title": "通知管理",
+    "desktopNotification": "桌面通知",
+    "enableDesktopNotification": "启用桌面通知",
+    "enableDesktopNotificationDesc": "接收代理事件的系统通知",
+    "notificationTypes": "通知类型",
+    "permissionRequest": "权限审批请求",
+    "turnComplete": "对话响应完成",
+    "agentError": "代理错误",
+    "sound": "声音",
+    "enableSound": "启用提示音",
+    "clickAction": "点击通知后",
+    "focusAndNavigate": "聚焦窗口并跳转到对应会话",
+    "silentOnly": "仅显示通知，不执行其他操作",
+    "timing": "通知时机",
+    "whenBackground": "仅在应用处于后台时发送通知",
+    "always": "始终发送通知"
   },
   "AppearanceSettings": {
     "sectionTitle": "主题外观",
