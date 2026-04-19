@@ -20,6 +20,7 @@ import {
   AcpConnectionsProvider,
   useAcpActions,
 } from "@/contexts/acp-connections-context"
+import { NotificationSettingsProvider } from "@/contexts/notification-settings-context"
 import { ConversationRuntimeProvider } from "@/contexts/conversation-runtime-context"
 import { TabProvider, useTabContext } from "@/contexts/tab-context"
 import { SessionStatsProvider } from "@/contexts/session-stats-context"
@@ -793,8 +794,9 @@ function FolderLayoutInner({ children }: { children: React.ReactNode }) {
       <AlertProvider>
         <GitCredentialProvider>
           <TaskProvider>
-            <AcpConnectionsProvider>
-              <ConversationRuntimeProvider>
+            <NotificationSettingsProvider>
+              <AcpConnectionsProvider>
+                <ConversationRuntimeProvider>
                 <WorkspaceProvider key={`workspace-${normalizedFolderId}`}>
                   <TabProvider>
                     <TabKeysSync />
@@ -817,6 +819,7 @@ function FolderLayoutInner({ children }: { children: React.ReactNode }) {
                 </WorkspaceProvider>
               </ConversationRuntimeProvider>
             </AcpConnectionsProvider>
+            </NotificationSettingsProvider>
           </TaskProvider>
         </GitCredentialProvider>
       </AlertProvider>
