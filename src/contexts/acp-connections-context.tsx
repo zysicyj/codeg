@@ -43,6 +43,7 @@ import {
   IDLE_SWEEP_INTERVAL_MS,
 } from "@/lib/constants"
 import { sendSystemNotification } from "@/lib/notification"
+import { useNotificationSettings } from "@/contexts/notification-settings-context"
 import {
   applySavedModePreference,
   applySavedConfigPreferences,
@@ -1331,6 +1332,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
   const tChat = useTranslations("Folder.chat")
   const { pushAlert } = useAlertContext()
   const { folder } = useFolderContext()
+  const { settings: notifSettings } = useNotificationSettings()
   const folderNameRef = useRef(folder?.name)
   useEffect(() => {
     folderNameRef.current = folder?.name
@@ -1730,7 +1732,11 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
             options: e.options,
           })
           // Send OS notification when permission approval is needed
-          {
+          if (
+            notifSettings.enabled &&
+            notifSettings.permissionRequest &&
+            (notifSettings.timing === "always" || document.hidden)
+          ) {
             const nc = storeRef.current.connections.get(contextKey)
             if (nc) {
               const agentLabel = AGENT_LABELS[nc.agentType]
@@ -1738,7 +1744,8 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
               const title = fn ? `${fn} - Codeg` : "Codeg"
               sendSystemNotification(
                 title,
-                `${agentLabel}: ${tChat("permissionDialog.subtitle")}`
+                `${agentLabel}: ${tChat("permissionDialog.subtitle")}`,
+                { sound: notifSettings.sound }
               ).catch(() => {})
             }
           }
@@ -1922,8 +1929,12 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
               }
             }
           }
-          // Send OS notification when window is not focused
-          {
+          // Send OS notification based on settings
+          if (
+            notifSettings.enabled &&
+            notifSettings.turnComplete &&
+            (notifSettings.timing === "always" || document.hidden)
+          ) {
             const nc = storeRef.current.connections.get(contextKey)
             if (nc) {
               const agentLabel = AGENT_LABELS[nc.agentType]
@@ -1931,7 +1942,8 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
               const title = fn ? `${fn} - Codeg` : "Codeg"
               sendSystemNotification(
                 title,
-                t("notificationTurnComplete", { agent: agentLabel })
+                t("notificationTurnComplete", { agent: agentLabel }),
+                { sound: notifSettings.sound }
               ).catch(() => {})
             }
           }
@@ -1977,16 +1989,23 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
           dispatch({ type: "ERROR", contextKey, message: localizedMessage })
           pushAlertRef.current("error", t("eventErrorTitle"), localizedMessage)
           // Send OS notification for agent errors
-          if (nc) {
-            const fn = folderNameRef.current
-            const title = fn ? `${fn} - Codeg` : "Codeg"
-            sendSystemNotification(
-              title,
-              t("notificationError", {
-                agent: agentLabel,
-                message: localizedMessage,
-              })
-            ).catch(() => {})
+          if (
+            notifSettings.enabled &&
+            notifSettings.agentError &&
+            (notifSettings.timing === "always" || document.hidden)
+          ) {
+            if (nc) {
+              const fn = folderNameRef.current
+              const title = fn ? `${fn} - Codeg` : "Codeg"
+              sendSystemNotification(
+                title,
+                t("notificationError", {
+                  agent: agentLabel,
+                  message: localizedMessage,
+                }),
+                { sound: notifSettings.sound }
+              ).catch(() => {})
+            }
           }
           break
         }
@@ -2019,6 +2038,7 @@ export function AcpConnectionsProvider({ children }: { children: ReactNode }) {
       scheduleToolCallUpdateFlush,
       t,
       tChat,
+      notifSettings,
     ]
   )
 
