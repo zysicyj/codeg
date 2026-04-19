@@ -93,10 +93,29 @@
       "version_control": "التحكم بالإصدارات",
       "system": "النظام",
       "chat_channels": "قنوات المحادثة",
+      "notifications": "الإشعارات",
       "web_service": "خدمة الويب",
       "model_providers": "مزودو النماذج",
       "experts": "الخبراء"
     }
+  },
+  "NotificationsSettings": {
+    "title": "الإشعارات",
+    "desktopNotification": "إشعار سطح المكتب",
+    "enableDesktopNotification": "تفعيل إشعارات سطح المكتب",
+    "enableDesktopNotificationDesc": "تلقي إشعارات النظام لأحداث الوكيل",
+    "notificationTypes": "أنواع الإشعارات",
+    "permissionRequest": "طلبات إذن الموافقة",
+    "turnComplete": "اكتمال الرد",
+    "agentError": "أخطاء الوكيل",
+    "sound": "الصوت",
+    "enableSound": "تفعيل الصوت",
+    "clickAction": "بعد النقر على الإشعار",
+    "focusAndNavigate": "تركيز النافذة والانتقال إلى المحادثة",
+    "silentOnly": "إظهار الإشعار فقط",
+    "timing": "توقيت الإشعارات",
+    "whenBackground": "فقط عند كون التطبيق في الخلفية",
+    "always": "إرسال الإشعارات دائمًا"
   },
   "AppearanceSettings": {
     "sectionTitle": "مظهر السمة",
