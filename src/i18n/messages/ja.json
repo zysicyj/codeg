@@ -93,10 +93,29 @@
       "version_control": "バージョン管理",
       "system": "システム",
       "chat_channels": "チャットチャンネル",
+      "notifications": "通知",
       "web_service": "Webサービス",
       "model_providers": "モデルプロバイダー",
       "experts": "エキスパート"
     }
+  },
+  "NotificationsSettings": {
+    "title": "通知",
+    "desktopNotification": "デスクトップ通知",
+    "enableDesktopNotification": "デスクトップ通知を有効にする",
+    "enableDesktopNotificationDesc": "エージェントイベントのシステム通知を受け取る",
+    "notificationTypes": "通知タイプ",
+    "permissionRequest": "権限承認リクエスト",
+    "turnComplete": "ターン完了",
+    "agentError": "エージェントエラー",
+    "sound": "サウンド",
+    "enableSound": "サウンドを有効にする",
+    "clickAction": "通知クリック後",
+    "focusAndNavigate": "ウィンドウをフォーカスして会話に移動",
+    "silentOnly": "通知のみ表示",
+    "timing": "通知タイミング",
+    "whenBackground": "アプリがバックグラウンドの場合のみ通知",
+    "always": "常に通知を送信"
   },
   "AppearanceSettings": {
     "sectionTitle": "テーマ外観",
