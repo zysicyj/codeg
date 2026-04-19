@@ -9,6 +9,7 @@ import {
 } from "react"
 import {
   Bot,
+  Bell,
   BookOpenText,
   GitBranch,
   Globe,
@@ -44,6 +45,7 @@ interface SettingsNavItem {
     | "shortcuts"
     | "version_control"
     | "chat_channels"
+    | "notifications"
     | "system"
     | "web_service"
   icon: ComponentType<{ className?: string }>
@@ -94,6 +96,11 @@ const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
     href: "/settings/chat-channels",
     labelKey: "chat_channels",
     icon: SendHorizontal,
+  },
+  {
+    href: "/settings/notifications",
+    labelKey: "notifications",
+    icon: Bell,
   },
   {
     href: "/settings/web-service",
