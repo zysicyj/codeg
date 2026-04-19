@@ -93,10 +93,29 @@
       "version_control": "버전 관리",
       "system": "시스템",
       "chat_channels": "채팅 채널",
+      "notifications": "알림",
       "web_service": "웹 서비스",
       "model_providers": "모델 제공업체",
       "experts": "전문가"
     }
+  },
+  "NotificationsSettings": {
+    "title": "알림",
+    "desktopNotification": "데스크톱 알림",
+    "enableDesktopNotification": "데스크톱 알림 활성화",
+    "enableDesktopNotificationDesc": "에이전트 이벤트 시스템 알림 받기",
+    "notificationTypes": "알림 유형",
+    "permissionRequest": "권한 승인 요청",
+    "turnComplete": "턴 완료",
+    "agentError": "에이전트 오류",
+    "sound": "소리",
+    "enableSound": "소리 활성화",
+    "clickAction": "알림 클릭 후",
+    "focusAndNavigate": "창에 포커스하고 대화로 이동",
+    "silentOnly": "알림만 표시",
+    "timing": "알림 타이밍",
+    "whenBackground": "앱이 백그라운드에 있을 때만 알림",
+    "always": "항상 알림 보내기"
   },
   "AppearanceSettings": {
     "sectionTitle": "테마 모양",
