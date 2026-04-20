@@ -109,60 +109,58 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <div className="group">
-            <button
-              data-conversation-id={conversation.id}
-              onClick={handleClick}
-              onDoubleClick={handleDblClick}
-              className={cn(
-                "w-full text-left px-3 py-2.5 mb-1 rounded-md transition-colors flex items-center gap-2",
-                isSelected
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "hover:bg-sidebar-accent/50"
-              )}
-            >
-              <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                <AgentIcon
-                  agentType={conversation.agent_type}
-                  className="size-4 shrink-0"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium truncate">
-                    {conversation.title || t("untitledConversation")}
-                  </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{timeAgo}</span>
-                    {conversation.git_branch && (
-                      <span className="flex items-center gap-0.5 truncate">
-                        <GitBranch className="h-3 w-3 shrink-0" />
-                        <span className="truncate">
-                          {conversation.git_branch}
-                        </span>
+          <button
+            data-conversation-id={conversation.id}
+            onClick={handleClick}
+            onDoubleClick={handleDblClick}
+            className={cn(
+              "group w-full text-left px-3 py-2.5 mb-1 rounded-md transition-colors flex items-center gap-2",
+              isSelected
+                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                : "hover:bg-sidebar-accent/50"
+            )}
+          >
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <AgentIcon
+                agentType={conversation.agent_type}
+                className="size-4 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">
+                  {conversation.title || t("untitledConversation")}
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{timeAgo}</span>
+                  {conversation.git_branch && (
+                    <span className="flex items-center gap-0.5 truncate">
+                      <GitBranch className="h-3 w-3 shrink-0" />
+                      <span className="truncate">
+                        {conversation.git_branch}
                       </span>
-                    )}
-                  </div>
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 shrink-0">
-                {STATUS_ORDER.filter((s) => s !== conversation.status).map(
-                  (s) => (
-                    <button
-                      key={s}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onStatusChange(conversation.id, s)
-                      }}
-                      className={cn(
-                        "w-3.5 h-3.5 rounded-full cursor-pointer hover:scale-110 transition-transform duration-150",
-                        STATUS_COLORS[s]
-                      )}
-                      title={tStatus(s)}
-                    />
-                  )
-                )}
-              </div>
-            </button>
-          </div>
+            </div>
+            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 shrink-0">
+              {STATUS_ORDER.filter((s) => s !== conversation.status).map(
+                (s) => (
+                  <div
+                    key={s}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onStatusChange(conversation.id, s)
+                    }}
+                    className={cn(
+                      "w-3.5 h-3.5 rounded-full cursor-pointer hover:scale-110 transition-transform duration-150",
+                      STATUS_COLORS[s]
+                    )}
+                    title={tStatus(s)}
+                  />
+                )
+              )}
+            </div>
+          </button>
         </ContextMenuTrigger>
         <ContextMenuContent>
           {onNewConversation && (
