@@ -1,0 +1,14 @@
+[build]
+# Try to use lld to avoid linker out of memory/command line too long issues on Windows
+target = "x86_64-pc-windows-msvc" # Recommended for Tauri on Windows
+
+[target.x86_64-pc-windows-gnu]
+linker = "rust-lld.exe"
+rustflags = ["--cfg=tokio_unstable"]
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
+rustflags = ["--cfg=tokio_unstable"]
+
+[target.'cfg(windows)'.dependencies.tauri-plugin-notification]
+features = ["notification-dangerous-allow-application-id"]
