@@ -9,6 +9,7 @@ export interface NotificationSettings {
   enabled: boolean
   permissionRequest: boolean
   turnComplete: boolean
+  sessionComplete: boolean
   agentError: boolean
   sound: boolean
   clickAction: NotificationClickAction
@@ -19,6 +20,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: true,
   permissionRequest: true,
   turnComplete: true,
+  sessionComplete: true,
   agentError: true,
   sound: false,
   clickAction: "focus",
@@ -35,6 +37,7 @@ function readSettings(): NotificationSettings {
       enabled: typeof parsed.enabled === "boolean" ? parsed.enabled : DEFAULT_NOTIFICATION_SETTINGS.enabled,
       permissionRequest: typeof parsed.permissionRequest === "boolean" ? parsed.permissionRequest : DEFAULT_NOTIFICATION_SETTINGS.permissionRequest,
       turnComplete: typeof parsed.turnComplete === "boolean" ? parsed.turnComplete : DEFAULT_NOTIFICATION_SETTINGS.turnComplete,
+      sessionComplete: typeof parsed.sessionComplete === "boolean" ? parsed.sessionComplete : DEFAULT_NOTIFICATION_SETTINGS.sessionComplete,
       agentError: typeof parsed.agentError === "boolean" ? parsed.agentError : DEFAULT_NOTIFICATION_SETTINGS.agentError,
       sound: typeof parsed.sound === "boolean" ? parsed.sound : DEFAULT_NOTIFICATION_SETTINGS.sound,
       clickAction: (parsed.clickAction === "focus" || parsed.clickAction === "silent")
